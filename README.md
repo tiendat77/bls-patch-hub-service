@@ -23,7 +23,7 @@ Start-Service PatchHubService
 5. Setup `PatchHub Service` to auto-start
 
 ```
-Set-Service sshd -StartupType Automatic
+Set-Service PatchHubService -StartupType Automatic
 ```
 
 ## Usage

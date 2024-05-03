@@ -1,0 +1,25 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "patchhub-service", "patchhub-service.csproj", "{CCFCDDB0-606F-4A5F-A757-53098B8FFADE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCFCDDB0-606F-4A5F-A757-53098B8FFADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCFCDDB0-606F-4A5F-A757-53098B8FFADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCFCDDB0-606F-4A5F-A757-53098B8FFADE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCFCDDB0-606F-4A5F-A757-53098B8FFADE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F818D205-80AC-453C-B708-64B1FEC693CA}
+	EndGlobalSection
+EndGlobal

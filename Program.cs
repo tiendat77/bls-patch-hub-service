@@ -1,5 +1,6 @@
 ﻿using App;
 
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
 
@@ -9,10 +10,14 @@ builder.Services.AddWindowsService(options =>
     options.ServiceName = "PatchHub Service";
 });
 
-LoggerProviderOptions.RegisterProviderOptions<
-    EventLogSettings, EventLogLoggerProvider>(builder.Services);
+if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+{
+    LoggerProviderOptions
+        .RegisterProviderOptions<EventLogSettings, EventLogLoggerProvider>(builder.Services);
+}
 
 builder.Services.AddSingleton<JokeService>();
+builder.Services.AddSingleton<UpdateService>();
 builder.Services.AddHostedService<WindowsBackgroundService>();
 
 IHost host = builder.Build();

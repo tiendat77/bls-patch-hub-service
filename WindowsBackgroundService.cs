@@ -2,12 +2,12 @@ namespace App;
 
 public sealed class WindowsBackgroundService : BackgroundService
 {
-    private readonly JokeService jokeService;
+    private readonly UpdateService updateService;
     private readonly ILogger<WindowsBackgroundService> logger;
 
-    public WindowsBackgroundService(JokeService jokeService, ILogger<WindowsBackgroundService> logger)
+    public WindowsBackgroundService(UpdateService updateService, ILogger<WindowsBackgroundService> logger)
     {
-        this.jokeService = jokeService;
+        this.updateService = updateService;
         this.logger = logger;
     }
 
@@ -17,9 +17,7 @@ public sealed class WindowsBackgroundService : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                string joke = jokeService.GetJoke();
-                logger.LogWarning("{Joke}", joke);
-
+                updateService.Start();
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
@@ -31,6 +29,7 @@ public sealed class WindowsBackgroundService : BackgroundService
         catch (Exception ex)
         {
             logger.LogError(ex, "{Message}", ex.Message);
+            updateService.Unsubscribe();
 
             // Terminates this process and returns an exit code to the operating system.
             // This is required to avoid the 'BackgroundServiceExceptionBehavior', which

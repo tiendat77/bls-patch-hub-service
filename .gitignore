@@ -1,6 +1,8 @@
 # Ignore build output
 bin/
 obj/
+releases/
+publish/
 
 # Ignore NuGet packages
 *.nupkg

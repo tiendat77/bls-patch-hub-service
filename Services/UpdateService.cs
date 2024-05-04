@@ -1,5 +1,8 @@
 namespace App;
 
+using App.Handlers;
+using App.Models;
+using System.Text.Json;
 using NATS.Client.Core;
 
 
@@ -8,6 +11,7 @@ public sealed class UpdateService
     private NatsConnection _nats;
     private INatsSub<string> _subscription;
 
+    private readonly EventHandler _eventHandler;
     private readonly ILogger<UpdateService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -16,6 +20,7 @@ public sealed class UpdateService
     {
         _logger = logger;
         _configuration = configuration;
+        _eventHandler = new EventHandler();
     }
 
     public void Start()
@@ -79,12 +84,22 @@ public sealed class UpdateService
             return;
         }
 
-        _subscription = await _nats.SubscribeCoreAsync<string>("service.update.*");
-        Console.WriteLine("Subscribed to service.update.*");
+        _subscription = await _nats.SubscribeCoreAsync<string>("2020610.update.patch.*");
+        Console.WriteLine("Subscribed to update.patch.*");
 
         await foreach (var msg in _subscription.Msgs.ReadAllAsync())
         {
             Console.WriteLine($"Received {msg.Subject}: {msg.Data}\n");
+
+            try
+            {
+                var patch = JsonSerializer.Deserialize<Patch>(msg.Data);
+                _eventHandler.HandlePatch(patch);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Message}", ex.Message);
+            }
         }
     }
 

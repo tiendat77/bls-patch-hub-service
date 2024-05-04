@@ -16,7 +16,6 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         .RegisterProviderOptions<EventLogSettings, EventLogLoggerProvider>(builder.Services);
 }
 
-builder.Services.AddSingleton<JokeService>();
 builder.Services.AddSingleton<UpdateService>();
 builder.Services.AddHostedService<WindowsBackgroundService>();
 

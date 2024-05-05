@@ -28,4 +28,4 @@ zip -r "../releases/$name@$version.zip" .
 
 # Clean up
 cd ..
-rm -rf publish
+# rm -rf publish

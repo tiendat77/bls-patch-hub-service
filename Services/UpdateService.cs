@@ -2,14 +2,18 @@ namespace App;
 
 using App.Handlers;
 using App.Models;
+
 using System.Text.Json;
 using NATS.Client.Core;
+using Microsoft.Data.SqlClient;
 
 
 public sealed class UpdateService
 {
     private NatsConnection _nats;
     private INatsSub<string> _subscription;
+
+    private string _storeID;
 
     private readonly EventHandler _eventHandler;
     private readonly ILogger<UpdateService> _logger;
@@ -34,6 +38,12 @@ public sealed class UpdateService
                         if (_nats == null)
                         {
                             await Connect();
+                        }
+
+                        if (string.IsNullOrEmpty(_storeID))
+                        {
+                            _storeID = await GetStoreID();
+                            Console.WriteLine($"StoreID: {_storeID}");
                         }
 
                         if (_subscription == null)
@@ -84,8 +94,8 @@ public sealed class UpdateService
             return;
         }
 
-        _subscription = await _nats.SubscribeCoreAsync<string>("2020610.commands.>");
-        Console.WriteLine("Subscribed to nats chanel");
+        _subscription = await _nats.SubscribeCoreAsync<string>($"{_storeID}.commands.>");
+        Console.WriteLine("Subscribed to nats chanel " + _storeID);
 
         await foreach (var msg in _subscription.Msgs.ReadAllAsync())
         {
@@ -106,14 +116,16 @@ public sealed class UpdateService
         Console.WriteLine("Unsubscribed from service.update.*");
     }
 
-    public void HandleMessage(NatsMsg<string> msg)
+    private async Task HandleMessage(NatsMsg<string> msg)
     {
         try
         {
             var result = string.Empty;
-            switch (msg.Subject)
+            var command = msg.Subject.Replace($"{_storeID}.", "");
+
+            switch (command)
             {
-                case "2020610.commands.install.patch":
+                case "commands.install.patch":
                     var patch = JsonSerializer.Deserialize<Patch>(
                         msg.Data,
                         new JsonSerializerOptions
@@ -121,13 +133,13 @@ public sealed class UpdateService
                             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                         }
                     );
-                    result = _eventHandler.HandlePatch(patch);
-                    msg.ReplyAsync(result);
+                    result = await _eventHandler.HandlePatch(patch);
+                    await msg.ReplyAsync(result);
                     break;
 
-                case "2020610.commands.execute.command":
-                    result = _eventHandler.HandleCommand(msg.Data);
-                    msg.ReplyAsync(result);
+                case "commands.execute.command":
+                    result = await _eventHandler.HandleCommand(msg.Data);
+                    await msg.ReplyAsync(result);
                     break;
 
                 default:
@@ -139,6 +151,44 @@ public sealed class UpdateService
         {
             _logger.LogError(ex, "{Message}", ex.Message);
         }
+    }
+
+    private async Task<string> GetStoreID()
+    {
+        string storeID = "";
+
+        try
+        {
+            string sqlServerUrl = _configuration["SQL_URL"];
+
+            using (SqlConnection connection = new SqlConnection(sqlServerUrl))
+            {
+                if (connection.State == System.Data.ConnectionState.Closed) {
+                    connection.Open();
+                }
+
+                string sql = "SELECT StoreID FROM dbo.Stores";
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        if (reader.HasRows)
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                storeID = reader.GetString(reader.GetOrdinal("StoreID"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (SqlException e)
+        {
+            _logger.LogError("{Message}", e.ToString());
+        }
+
+        return storeID;
     }
 
 }

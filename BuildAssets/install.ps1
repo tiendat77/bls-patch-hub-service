@@ -10,10 +10,10 @@ if (!([bool]([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsId
 $scriptpath = $MyInvocation.MyCommand.Path
 $scriptdir = Split-Path $scriptpath
 
-$patchHubpath = Join-Path $scriptdir "patchhub-service.exe"
+$patchHubpath = Join-Path $scriptdir "PatchHubService.exe"
 
 if (-not (Test-Path $patchHubpath)) {
-    throw "patchhub-service.exe is not present in script path"
+    throw "PatchHubService.exe is not present in script path"
 }
 
 # Stop and delete the service if it already exists

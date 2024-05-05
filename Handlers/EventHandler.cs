@@ -5,24 +5,30 @@ using System.Management.Automation;
 
 public class EventHandler
 {
-    public string HandlePatch(Patch patch)
+    public async Task<string> HandlePatch(Patch patch)
     {
         switch (patch.Software)
         {
             case "reports-service":
-                var path = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "Scripts",
-                    "update-reports-service.ps1"
-                );
-
-                string command = $"Start-Process powershell.exe -Verb RunAs -ArgumentList '-File \"{path}\" {patch.Path}'";
-
                 using (var pws = PowerShell.Create()) {
-                    pws.AddScript(command);
+                    try
+                    {
+                        var path = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "Scripts",
+                            "update-reports-service.ps1"
+                        );
 
-                    var result = pws.Invoke().FirstOrDefault()?.ToString();
-                    return result ?? "Failed to apply patch";
+                        string command = $"Start-Process powershell.exe -Verb RunAs -ArgumentList '-File \"{path}\" {patch.Path}'";
+
+                        pws.AddScript(command);
+                        await pws.InvokeAsync();
+                        return "Patch applied successfully";
+                    }
+                    catch (System.Exception)
+                    {
+                        return "Failed to apply patch";
+                    }
                 }
 
             default:
@@ -30,13 +36,19 @@ public class EventHandler
         }
     }
 
-    public string HandleCommand(string script)
+    public async Task<string> HandleCommand(string script)
     {
         using (var pws = PowerShell.Create()) {
-            pws.AddScript(script);
-
-            var result = pws.Invoke().FirstOrDefault()?.ToString();
-            return result ?? "Failed to execute command";
+            try
+            {
+                pws.AddScript(script);
+                var result = await pws.InvokeAsync();
+                return "Command executed successfully";
+            }
+            catch (System.Exception)
+            {
+                return "Failed to execute command";
+            }
         }
     }
 }

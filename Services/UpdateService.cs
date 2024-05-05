@@ -84,22 +84,13 @@ public sealed class UpdateService
             return;
         }
 
-        _subscription = await _nats.SubscribeCoreAsync<string>("2020610.update.patch.*");
-        Console.WriteLine("Subscribed to update.patch.*");
+        _subscription = await _nats.SubscribeCoreAsync<string>("2020610.commands.>");
+        Console.WriteLine("Subscribed to nats chanel");
 
         await foreach (var msg in _subscription.Msgs.ReadAllAsync())
         {
             Console.WriteLine($"Received {msg.Subject}: {msg.Data}\n");
-
-            try
-            {
-                var patch = JsonSerializer.Deserialize<Patch>(msg.Data);
-                _eventHandler.HandlePatch(patch);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "{Message}", ex.Message);
-            }
+            HandleMessage(msg);
         }
     }
 
@@ -113,6 +104,41 @@ public sealed class UpdateService
 
         await _subscription.UnsubscribeAsync();
         Console.WriteLine("Unsubscribed from service.update.*");
+    }
+
+    public void HandleMessage(NatsMsg<string> msg)
+    {
+        try
+        {
+            var result = string.Empty;
+            switch (msg.Subject)
+            {
+                case "2020610.commands.install.patch":
+                    var patch = JsonSerializer.Deserialize<Patch>(
+                        msg.Data,
+                        new JsonSerializerOptions
+                        {
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                        }
+                    );
+                    result = _eventHandler.HandlePatch(patch);
+                    msg.ReplyAsync(result);
+                    break;
+
+                case "2020610.commands.execute.command":
+                    result = _eventHandler.HandleCommand(msg.Data);
+                    msg.ReplyAsync(result);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unknown subject: {Subject}", msg.Subject);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Message}", ex.Message);
+        }
     }
 
 }

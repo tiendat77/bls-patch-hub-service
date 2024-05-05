@@ -5,11 +5,9 @@ using System.Management.Automation;
 
 public class EventHandler
 {
-    public void HandlePatch(Patch patch)
+    public string HandlePatch(Patch patch)
     {
-        string script = string.Empty;
-
-        switch (patch.Name)
+        switch (patch.Software)
         {
             case "reports-service":
                 var path = Path.Combine(
@@ -18,16 +16,27 @@ public class EventHandler
                     "update-reports-service.ps1"
                 );
 
-                script = File.ReadAllText(path);
-                break;
+                string command = $"Start-Process powershell.exe -Verb RunAs -ArgumentList '-File \"{path}\" {patch.Path}'";
+
+                using (var pws = PowerShell.Create()) {
+                    pws.AddScript(command);
+
+                    var result = pws.Invoke().FirstOrDefault()?.ToString();
+                    return result ?? "Failed to apply patch";
+                }
+
             default:
-                break;
+                return "Invalid patch name";
         }
+    }
 
-        var result = PowerShell.Create().AddScript(script)
-            .AddParameter("arg1", patch.Path)
-            .Invoke();
+    public string HandleCommand(string script)
+    {
+        using (var pws = PowerShell.Create()) {
+            pws.AddScript(script);
 
-        Console.WriteLine("Result: " + result);
+            var result = pws.Invoke().FirstOrDefault()?.ToString();
+            return result ?? "Failed to execute command";
+        }
     }
 }

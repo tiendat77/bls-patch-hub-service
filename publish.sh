@@ -16,10 +16,11 @@ mkdir -p releases
 dotnet publish --configuration Release --output publish
 
 # Copy asset files to the publish folder
+rm publish/appsettings.Development.json
 cp README.md publish/
 cp LICENSE publish/
+cp BuildAssets/* publish/
 cp -r Scripts publish/
-cp -r BuildAssets publish/
 
 # Create zip file
 cd publish

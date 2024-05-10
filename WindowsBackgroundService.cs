@@ -1,6 +1,6 @@
 namespace App;
 
-public sealed class WindowsBackgroundService : BackgroundService
+public sealed class WindowsBackgroundService : BackgroundService, IDisposable
 {
     private readonly UpdateService updateService;
     private readonly ILogger<WindowsBackgroundService> logger;
@@ -17,7 +17,7 @@ public sealed class WindowsBackgroundService : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                updateService.Start();
+                await updateService.StartAsync();
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
@@ -29,7 +29,7 @@ public sealed class WindowsBackgroundService : BackgroundService
         catch (Exception ex)
         {
             logger.LogError(ex, "{Message}", ex.Message);
-            updateService.Unsubscribe();
+            await updateService.Unsubscribe();
 
             // Terminates this process and returns an exit code to the operating system.
             // This is required to avoid the 'BackgroundServiceExceptionBehavior', which
@@ -42,4 +42,11 @@ public sealed class WindowsBackgroundService : BackgroundService
             Environment.Exit(1);
         }
     }
+
+    public override async void Dispose()
+    {
+        await updateService.Unsubscribe();
+    }
+
+
 }

@@ -3,6 +3,7 @@ bin/
 obj/
 releases/
 publish/
+Logs/
 
 # Ignore NuGet packages
 *.nupkg

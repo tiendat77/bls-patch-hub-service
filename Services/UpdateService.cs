@@ -27,42 +27,32 @@ public sealed class UpdateService
         _eventHandler = new EventHandler();
     }
 
-    public void Start()
+    public async Task StartAsync()
     {
-        Task.Run(async () =>
+        while (true)
+        {
+            try
             {
-                try
+                if (_nats == null)
                 {
-                    while (true)
-                    {
-                        if (_nats == null)
-                        {
-                            await Connect();
-                        }
-
-                        if (string.IsNullOrEmpty(_storeID))
-                        {
-                            _storeID = await GetStoreID();
-                            Console.WriteLine($"StoreID: {_storeID}");
-                        }
-
-                        if (_subscription == null)
-                        {
-                            await Subscribe();
-                        }
-
-                        await Task.Delay(TimeSpan.FromMinutes(1));
-                    }
+                    await Connect();
                 }
-                catch (Exception ex)
+
+                if (string.IsNullOrEmpty(_storeID))
                 {
-                    _logger.LogError(ex, "{Message}", ex.Message);
-
-                    // Retry after 15 seconds
-                    await Task.Delay(TimeSpan.FromSeconds(15));
+                    _storeID = await GetStoreID();
+                    _logger.LogInformation($"StoreID: {_storeID}");
                 }
+
+                if (_subscription == null)
+                {
+                    await Subscribe();
+                }
+            } catch (Exception ex) {
+                _logger.LogError(ex, "{Message}", ex.Message);
+                await Task.Delay(TimeSpan.FromMinutes(1));
             }
-        );
+        }
     }
 
     public async Task Connect()
@@ -74,16 +64,22 @@ public sealed class UpdateService
 
         var url = _configuration["NATS_URL"];
         _nats = new NatsConnection(new NatsOpts
-            {
-                Url = url
-            }
+        {
+            Url = url
+        }
         );
 
-        Console.WriteLine($"Connecting to NATS Server at {url}");
+        _logger.LogInformation($"Connecting to NATS Server at {url}");
 
         // Connections are lazy, so we need to connect explicitly
         // to avoid any races between subscription and publishing.
         await _nats.ConnectAsync();
+        _nats.ConnectionOpened += async (e, args) => {
+            _logger.LogInformation($"Connected from server");
+        };
+        _nats.ConnectionDisconnected += async (e, args) => {
+            _logger.LogInformation($"Disconnected from server");
+        };
     }
 
     public async Task Subscribe()
@@ -95,12 +91,12 @@ public sealed class UpdateService
         }
 
         _subscription = await _nats.SubscribeCoreAsync<string>($"{_storeID}.commands.>");
-        Console.WriteLine("Subscribed to nats chanel " + _storeID);
+        _logger.LogInformation("Subscribed to nats chanel " + _storeID);
 
         await foreach (var msg in _subscription.Msgs.ReadAllAsync())
         {
-            Console.WriteLine($"Received {msg.Subject}: {msg.Data}\n");
-            HandleMessage(msg);
+            _logger.LogInformation($"Received {msg.Subject}: {msg.Data}\n");
+            await HandleMessage(msg);
         }
     }
 
@@ -113,7 +109,8 @@ public sealed class UpdateService
         }
 
         await _subscription.UnsubscribeAsync();
-        Console.WriteLine("Unsubscribed from service.update.*");
+        await _nats.DisposeAsync();
+        _logger.LogInformation("Unsubscribed from service.update.*");
     }
 
     private async Task HandleMessage(NatsMsg<string> msg)
@@ -163,7 +160,8 @@ public sealed class UpdateService
 
             using (SqlConnection connection = new SqlConnection(sqlServerUrl))
             {
-                if (connection.State == System.Data.ConnectionState.Closed) {
+                if (connection.State == System.Data.ConnectionState.Closed)
+                {
                     connection.Open();
                 }
 

@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
 using Serilog;
-using Serilog.Core;
 using Serilog.Events;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
@@ -23,10 +22,12 @@ builder.Services.AddSingleton<UpdateService>();
 builder.Services.AddHostedService<WindowsBackgroundService>();
 
 builder.Services.AddLogging(configure => {
+    var ConsoleLogLevel = builder.Configuration.GetSection("Serilog:ConsoleLogLevel").Get<LogEventLevel>();
+    var FileLogLevel = builder.Configuration.GetSection("Serilog:FileLogLevel").Get<LogEventLevel>();
+
     var logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/log.txt", LogEventLevel.Error, "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3}] {Username} {Message:lj}{NewLine}{Exception}", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 365)
-    .WriteTo.Console(LogEventLevel.Warning, outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3}] {Username} {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Console(ConsoleLogLevel, outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3}] {Username} {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("Logs/log.txt", FileLogLevel, "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3}] {Username} {Message:lj}{NewLine}{Exception}", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 365)
     .CreateLogger();
 
     configure.AddSerilog(logger);

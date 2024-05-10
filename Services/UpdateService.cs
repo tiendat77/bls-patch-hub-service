@@ -48,7 +48,7 @@ public sealed class UpdateService
                 {
                     await Subscribe();
                 }
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 _logger.LogError(ex, "{Message}", ex.Message);
                 await Task.Delay(TimeSpan.FromMinutes(1));
             }

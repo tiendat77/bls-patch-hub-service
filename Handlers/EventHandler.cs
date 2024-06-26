@@ -5,7 +5,7 @@ using System.Management.Automation;
 
 public class EventHandler
 {
-    public async Task<string> HandlePatch(Patch patch)
+    public async Task<ResponseBase> HandlePatch(Patch patch)
     {
         switch (patch.Software)
         {
@@ -23,31 +23,31 @@ public class EventHandler
 
                         pws.AddScript(command);
                         await pws.InvokeAsync();
-                        return "Patch applied successfully";
+                        return new SuccessResponse(true, "Patch applied successfully");
                     }
                     catch (System.Exception)
                     {
-                        return "Failed to apply patch";
+                        return new ErrorResponse(false, "Failed to apply patch", "");
                     }
                 }
 
             default:
-                return "Invalid patch name";
+                return new ErrorResponse(false, "Invalid patch name");
         }
     }
 
-    public async Task<string> HandleCommand(string script)
+    public async Task<ResponseBase> HandleCommand(string script)
     {
         using (var pws = PowerShell.Create()) {
             try
             {
                 pws.AddScript(script);
                 var result = await pws.InvokeAsync();
-                return "Command executed successfully";
+                return new SuccessResponse(true, "Command executed successfully");
             }
             catch (System.Exception)
             {
-                return "Failed to execute command";
+                return new ErrorResponse(false, "Failed to execute command");
             }
         }
     }

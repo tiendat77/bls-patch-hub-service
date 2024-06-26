@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient;
 public sealed class UpdateService
 {
     private NatsConnection _nats;
-    private INatsSub<string> _subscription;
+    private INatsSub<Patch> _subscription;
 
     private string _storeID;
 
@@ -64,9 +64,9 @@ public sealed class UpdateService
 
         var url = _configuration["NATS_URL"];
         _nats = new NatsConnection(new NatsOpts
-        {
-            Url = url
-        }
+            {
+                Url = url
+            }
         );
 
         _logger.LogInformation($"Connecting to NATS Server at {url}");
@@ -90,7 +90,13 @@ public sealed class UpdateService
             return;
         }
 
-        _subscription = await _nats.SubscribeCoreAsync<string>($"{_storeID}.commands.>");
+        var serializer = new NatsJsonContextSerializer<Patch>(PatchContext.Default);
+
+        _subscription = await _nats.SubscribeCoreAsync<Patch>(
+            $"{_storeID}.commands.>",
+            serializer: serializer
+        );
+
         _logger.LogInformation("Subscribed to nats chanel " + _storeID);
 
         await foreach (var msg in _subscription.Msgs.ReadAllAsync())
@@ -113,34 +119,24 @@ public sealed class UpdateService
         _logger.LogInformation("Unsubscribed from service.update.*");
     }
 
-    private async Task HandleMessage(NatsMsg<string> msg)
+    private async Task HandleMessage(NatsMsg<Patch> msg)
     {
         try
         {
-            var result = string.Empty;
+            ResponseBase result = null;
             var command = msg.Subject.Replace($"{_storeID}.", "");
+            var serializer = new NatsJsonContextSerializer<ResponseBase>(ResponseBaseContext.Default);
 
             switch (command)
             {
                 case "commands.install.patch":
-                    var patch = JsonSerializer.Deserialize<Patch>(
-                        msg.Data,
-                        new JsonSerializerOptions
-                        {
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                        }
-                    );
-                    result = await _eventHandler.HandlePatch(patch);
-                    await msg.ReplyAsync(result);
-                    break;
-
-                case "commands.execute.command":
-                    result = await _eventHandler.HandleCommand(msg.Data);
-                    await msg.ReplyAsync(result);
+                    result = await _eventHandler.HandlePatch(msg.Data);
+                    await msg.ReplyAsync(result, serializer: serializer);
                     break;
 
                 default:
                     _logger.LogWarning("Unknown subject: {Subject}", msg.Subject);
+                    await msg.ReplyAsync(new ErrorResponse(false, "Unknown command"), serializer: serializer);
                     break;
             }
         }

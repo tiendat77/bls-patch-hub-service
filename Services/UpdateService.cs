@@ -75,7 +75,7 @@ public sealed class UpdateService
         // to avoid any races between subscription and publishing.
         await _nats.ConnectAsync();
         _nats.ConnectionOpened += async (e, args) => {
-            _logger.LogInformation($"Connected from server");
+            _logger.LogInformation($"Connected to server");
         };
         _nats.ConnectionDisconnected += async (e, args) => {
             _logger.LogInformation($"Disconnected from server");

@@ -10,24 +10,24 @@ if (!([bool]([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsId
 $scriptpath = $MyInvocation.MyCommand.Path
 $scriptdir = Split-Path $scriptpath
 
-$patchHubpath = Join-Path $scriptdir "PatchHubService.exe"
+$patchHubPath = Join-Path $scriptdir "PatchHubService.exe"
 
-if (-not (Test-Path $patchHubpath)) {
+if (-not (Test-Path $patchHubPath)) {
     throw "PatchHubService.exe is not present in script path"
 }
 
 # Stop and delete the service if it already exists
-if (Get-Service patchhub -ErrorAction SilentlyContinue)
+if (Get-Service PatchHub -ErrorAction SilentlyContinue)
 {
-   Stop-Service patchhub
-   sc.exe delete patchhub 1>$null
+   Stop-Service PatchHub
+   sc.exe delete PatchHub 1>$null
 }
 
 # Install the service
-New-Service -Name patchhub -DisplayName "Patch Hub Service" -BinaryPathName "`"$patchHubpath`"" -Description "A service to install software patches" -StartupType Automatic | Out-Null
-Start-Service patchhub
+New-Service -Name PatchHub -DisplayName "Patch Hub Service" -BinaryPathName "`"$patchHubPath`"" -Description "A service to install software patches" -StartupType Automatic | Out-Null
+Start-Service PatchHub
 
 # Recovery
-sc.exe failure patchhub reset= 0 actions= restart/60000/restart/60000/restart/60000 1>$null
+sc.exe failure PatchHub reset= 0 actions= restart/60000/restart/60000/restart/60000 1>$null
 
 Write-Host -ForegroundColor Green "Patch Hub Service successfully installed"

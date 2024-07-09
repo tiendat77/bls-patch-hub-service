@@ -7,7 +7,7 @@ PatchHub Service is a Windows service that listens for deploy commands from deve
 To install the PatchHub Service, follow these steps:
 
 1. Download the latest build from [releases](https://github.com/tiendat77/patch-hub-service/releases/latest).
-2. Extract contents of the latest build to  `C:\Program Files\PatchHubService` (Make sure binary location has the Write permissions to just to SYSTEM, Administrator groups. Authenticated users should and only have Read and Execute.)
+2. Extract contents of the latest build to  `C:\Program Files (x86)\PatchHubService` (Make sure binary location has the Write permissions to just to SYSTEM, Administrator groups. Authenticated users should and only have Read and Execute.)
 3. In an elevated Powershell console, run the following:
 
 ```

@@ -14,7 +14,7 @@ public class EventHandler
                     try
                     {
                         var path = Path.Combine(
-                            Directory.GetCurrentDirectory(),
+                            "C:/Program Files (x86)/PatchHubService",
                             "Scripts",
                             "update-reports-service.ps1"
                         );

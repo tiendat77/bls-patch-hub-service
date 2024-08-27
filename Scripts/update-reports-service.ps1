@@ -7,19 +7,23 @@ $ReportsServicePath = "C:\Program Files (x86)\BLogic Systems\BLogic Service\BLog
 $PatchHubPath = Join-Path $env:TEMP "PatchHubDownloads"
 $ReportPatchPath = Join-Path $PatchHubPath "ReportsServicePatch"
 
+$result = ""
+
 ########################################################################################
 # Functions
 ########################################################################################
 
 function Prepare-Environment {
     if (-not (Test-Path $ReportsServicePath)) {
-        Write-Host "Reports Service is not installed"
-        Exit
+        $result = "Reports Service is not installed"
+        Write-Host $result
+        return $result
     }
 
     if (-not (Get-Service "BLogicReportService" -ErrorAction SilentlyContinue)) {
-        Write-Host "Reports Service is not installed"
-        Exit
+        $result = "Reports Service is not installed"
+        Write-Host $result
+        return $result
     }
 
     if (-not (Test-Path $ReportPatchPath)) {
@@ -39,8 +43,9 @@ function Download-File {
         Invoke-WebRequest -Uri $url -OutFile $PatchFile
     }
     catch {
-        Write-Host "Failed to download patch file"
-        Exit
+        $result = "Failed to download patch file"
+        Write-Host $result
+        return $result
     }
 
     Write-Host "Extracting patch file"
@@ -55,15 +60,42 @@ function Install-Patch {
     Write-Host "Stopping '$ServiceName'"
     Stop-Service -Name $ServiceName -Force
 
+    if ($?) {
+        Write-Host "Successfully stopped '$ServiceName'"
+    }
+    else {
+        $result = "Failed to stop '$ServiceName'"
+        Write-Host $result
+        return $result
+    }
+
     Start-Sleep -Seconds 1
 
     Write-Host "Copying patch files"
     Copy-Item -Path "$ReportPatchPath\*" -Destination $ReportsServicePath -Recurse -Force
 
+    if ($?) {
+        Write-Host "Successfully copied patch files"
+    }
+    else {
+        $result = "Failed to copy patch files"
+        Write-Host $result
+        return $result
+    }
+
     Start-Sleep -Seconds 1
 
     Write-Host "Starting '$ServiceName'"
     Start-Service -Name $ServiceName
+
+    if ($?) {
+        Write-Host "Successfully started '$ServiceName'"
+    }
+    else {
+        $result = "Failed to start '$ServiceName'"
+        Write-Host $result
+        return $result
+    }
 
     Remove-Item -Path $ReportPatchPath -Recurse -Force
     Write-Host "Patch installed successfully"
@@ -76,9 +108,9 @@ function Install-Patch {
 if (!([bool]([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")))
 {
     Start-Process powershell -ArgumentList "-File $($MyInvocation.MyCommand.Path)" -Verb RunAs
-    Exit
+    return "Aborting script execution due to lack of Administrator privileges."
 }
 
 Prepare-Environment
 Download-File -url $url
-Install-Patch $PatchFolder
+return Install-Patch $PatchFolder

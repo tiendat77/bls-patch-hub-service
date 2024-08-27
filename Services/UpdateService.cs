@@ -24,7 +24,7 @@ public sealed class UpdateService
     {
         _logger = logger;
         _configuration = configuration;
-        _eventHandler = new EventHandler();
+        _eventHandler = new EventHandler(logger, configuration);
     }
 
     public async Task StartAsync()

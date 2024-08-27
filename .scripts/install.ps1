@@ -8,4 +8,4 @@ if (!([bool]([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsId
 }
 
 
-New-Service -Name PatchHub -DisplayName "Patch Hub Service" -BinaryPathName "C:\Program Files\PatchHubService\PatchHubService.exe" -Description "A service to install software patches" -StartupType Automatic
+New-Service -Name PatchHub -DisplayName "Patch Hub Service" -BinaryPathName "C:\Program Files (x86)\PatchHubService\PatchHubService.exe" -Description "A service to install software patches" -StartupType Automatic

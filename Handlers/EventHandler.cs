@@ -5,6 +5,16 @@ using System.Management.Automation;
 
 public class EventHandler
 {
+
+    private readonly ILogger _logger;
+
+    private readonly IConfiguration _configuration;
+
+    public EventHandler(ILogger logger, IConfiguration configuration) {
+        _logger = logger;
+        _configuration = configuration;
+    }
+
     public async Task<ResponseBase> HandlePatch(Patch patch)
     {
         switch (patch.Software)
@@ -14,20 +24,33 @@ public class EventHandler
                     try
                     {
                         var path = Path.Combine(
-                            "C:/Program Files (x86)/PatchHubService",
+                            _configuration["Location"],
                             "Scripts",
                             "update-reports-service.ps1"
                         );
 
-                        string command = $"Start-Process powershell.exe -Verb RunAs -ArgumentList '-File \"{path}\" {patch.Path}'";
+                        string command = File.ReadAllText(path);
 
                         pws.AddScript(command);
-                        await pws.InvokeAsync();
+                        pws.AddParameter("url", patch.Path);
+
+                        var result = await pws.InvokeAsync();
+
+                        if (result != null) {
+                            var error = result.FirstOrDefault();
+
+                            if (error != null) {
+                                _logger.LogError(error.ToString());
+                                return new ErrorResponse(false, error.ToString());
+                            }
+                        }
+
                         return new SuccessResponse(true, "Patch applied successfully");
                     }
-                    catch (System.Exception)
+                    catch (System.Exception ex)
                     {
-                        return new ErrorResponse(false, "Failed to apply patch", "");
+                        _logger.LogError(ex, message: "Failed to apply patch");
+                        return new ErrorResponse(false, ex.ToString());
                     }
                 }
 

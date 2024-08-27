@@ -8,7 +8,7 @@ HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
        .WriteTo.File(
-            "C:/Program Files (x86)/PatchHubService/Logs/log.txt",
+            builder.Configuration.GetSection("Location").Value + "/Logs/log.txt",
             LogEventLevel.Information,
             "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3}] {Username} {Message:lj}{NewLine}{Exception}",
             rollingInterval: RollingInterval.Day,

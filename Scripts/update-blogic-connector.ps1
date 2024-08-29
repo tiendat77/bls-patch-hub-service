@@ -4,23 +4,17 @@ param (
 )
 
 $PatchHubPath = Join-Path $env:TEMP "PatchHubDownloads"
-$PatchFile = Join-Path $PatchHubPath "ReportsService.zip"
-$DownloadPath = Join-Path $PatchHubPath "ReportsServicePatch"
-$ReportsServicePath = "C:\Program Files (x86)\BLogic Systems\BLogic Service\BLogicReportService"
+$PatchFile = Join-Path $PatchHubPath "BLogicConnector.zip"
+$DownloadPath = Join-Path $PatchHubPath "BLogicConnectorPatch"
+$BLogicConnectorPath = "C:\Program Files (x86)\BLogic Systems\BLogicConnector\bin"
 
 ########################################################################################
 # Functions
 ########################################################################################
 
 function Prepare-Environment {
-    if (-not (Test-Path $ReportsServicePath)) {
-        $result = "Reports Service is not installed"
-        Write-Host $result
-        return $result
-    }
-
-    if (-not (Get-Service "BLogicReportService" -ErrorAction SilentlyContinue)) {
-        $result = "Reports Service is not installed"
+    if (-not (Test-Path $BLogicConnectorPath)) {
+        $result = "BLogicConnector is not installed"
         Write-Host $result
         return $result
     }
@@ -37,8 +31,7 @@ function Download-File {
         [string]$url
     )
 
-    try
-    {
+    try {
         Write-Host "Download patch file"
         Invoke-WebRequest -Uri $url -OutFile $PatchFile
     }
@@ -51,30 +44,23 @@ function Download-File {
     Write-Host "Extracting patch file"
     Expand-Archive -Force -Path $PatchFile -DestinationPath $DownloadPath
 
+    if ($?) {
+        Write-Host "Extraction successful"
+    }
+    else {
+        $result = "Failed to extract patch file"
+        Write-Host $result
+        return $result
+    }
+
     Remove-Item -Path $PatchFile -Force
 
     return $null
 }
 
 function Install-Patch {
-    $ServiceName = "BLogicReportService"
-
-    Write-Host "Stopping '$ServiceName'"
-    Stop-Service -Name $ServiceName -Force
-
-    if ($?) {
-        Write-Host "Successfully stopped '$ServiceName'"
-    }
-    else {
-        $result = "Failed to stop '$ServiceName'"
-        Write-Host $result
-        return $result
-    }
-
-    Start-Sleep -Seconds 1
-
     Write-Host "Copying patch files"
-    Copy-Item -Path "$DownloadPath\*" -Destination $ReportsServicePath -Recurse -Force
+    Copy-Item -Path "$DownloadPath\*" -Destination $BLogicConnectorPath -Recurse -Force
 
     if ($?) {
         Write-Host "Successfully copied patch files"
@@ -87,14 +73,14 @@ function Install-Patch {
 
     Start-Sleep -Seconds 1
 
-    Write-Host "Starting '$ServiceName'"
-    Start-Service -Name $ServiceName
+    Write-Host "Restarting IIS"
+    Restart-Service -Name W3SVC -Force
 
     if ($?) {
-        Write-Host "Successfully started '$ServiceName'"
+        Write-Host "Successfully restart IIS"
     }
     else {
-        $result = "Failed to start '$ServiceName'"
+        $result = "Failed to restart IIS"
         Write-Host $result
         return $result
     }
@@ -129,13 +115,13 @@ if ($response -ne $null) {
     return $response
 }
 
-$response = Download-File -url $url
+$response = (Download-File -url $url)
 if ($response -ne $null) {
     Clean-Up
     return $response
 }
 
-$response = Install-Patch
+$response = (Install-Patch $PatchFolder)
 if ($response -ne $null) {
     Clean-Up
     return $response

@@ -17,45 +17,64 @@ public class EventHandler
 
     public async Task<ResponseBase> HandlePatch(Patch patch)
     {
+        var path = string.Empty;
+
         switch (patch.Software)
         {
             case "reports-service":
-                using (var pws = PowerShell.Create()) {
-                    try
-                    {
-                        var path = Path.Combine(
-                            _configuration["Location"],
-                            "Scripts",
-                            "update-reports-service.ps1"
-                        );
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-reports-service.ps1"
+                );
+                break;
 
-                        string command = File.ReadAllText(path);
-
-                        pws.AddScript(command);
-                        pws.AddParameter("url", patch.Path);
-
-                        var result = await pws.InvokeAsync();
-
-                        if (result != null) {
-                            var error = result.FirstOrDefault();
-
-                            if (error != null) {
-                                _logger.LogError(error.ToString());
-                                return new ErrorResponse(false, error.ToString());
-                            }
-                        }
-
-                        return new SuccessResponse(true, "Patch applied successfully");
-                    }
-                    catch (System.Exception ex)
-                    {
-                        _logger.LogError(ex, message: "Failed to apply patch");
-                        return new ErrorResponse(false, ex.ToString());
-                    }
-                }
+            case "blogic-connector":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-blogic-connector.ps1"
+                );
+                break;
 
             default:
-                return new ErrorResponse(false, "Invalid patch name");
+             break;
+        }
+
+        if (path == string.Empty) {
+            _logger.LogError("Invalid patch name");
+            return new ErrorResponse(false, "Invalid patch name");
+        }
+
+        using (var pws = PowerShell.Create()) {
+            try
+            {
+                var output = Path.Combine(
+                    _configuration["Location"],
+                    "Logs",
+                    "powershell-output.txt"
+                );
+
+                pws.AddScript($" Start-Process powershell.exe -Verb RunAs -PassThru -Wait -ArgumentList \"-NoProfile -ExecutionPolicy Bypass -Command \"\"& {path} {patch.Path} > {output}\"\"\" ");
+
+                await pws.InvokeAsync();
+
+                string result = File.ReadAllText(output) ?? string.Empty;
+                result = result?.Trim()?.Replace("\r", string.Empty).Replace("\n", " ") ?? string.Empty;
+
+                if (result != string.Empty) {
+                    _logger.LogError(result);
+                    return new ErrorResponse(false, result);
+                }
+
+                _logger.LogInformation($"Installed {patch.Software} Patch");
+                return new SuccessResponse(true, "Patch applied successfully");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, message: "Failed to apply patch");
+                return new ErrorResponse(false, ex.ToString());
+            }
         }
     }
 

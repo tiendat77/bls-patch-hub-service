@@ -48,12 +48,19 @@ function Download-File {
         return $result
     }
 
-    Write-Host "Extracting patch file"
-    Expand-Archive -Force -Path $PatchFile -DestinationPath $DownloadPath
+    try {
+        Write-Host "Extracting patch file"
+        Expand-Archive -LiteralPath $PatchFile -DestinationPath $DownloadPath -Force | Out-File -FilePath "$PatchHubPath\Result.txt"
 
-    Remove-Item -Path $PatchFile -Force
-
-    return $null
+        Remove-Item -Path $PatchFile -Force
+        return $null
+    }
+    catch {
+        $Error[0] | Out-File -FilePath "C:\Program Files (x86)\PatchHubService\Logs\Errorlog.txt" -Append
+        $result = "Failed to extract patch files $_.Exception.Message"
+        Write-Host $result
+        return $result
+    }
 }
 
 function Install-Patch {

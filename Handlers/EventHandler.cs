@@ -49,17 +49,20 @@ public class EventHandler
         using (var pws = PowerShell.Create()) {
             try
             {
+                var result = string.Empty;
+
                 var output = Path.Combine(
                     _configuration["Location"],
                     "Logs",
                     "powershell-output.txt"
                 );
 
-                pws.AddScript($" Start-Process powershell.exe -Verb RunAs -PassThru -Wait -ArgumentList \"-NoProfile -ExecutionPolicy Bypass -Command \"\"& {path} {patch.Path} > {output}\"\"\" ");
+                string command = $" Start-Process powershell.exe -Verb RunAs -PassThru -Wait -ArgumentList \"-NoProfile -ExecutionPolicy Bypass -Command \"\"& '{path}' '{patch.Path}' > '{output}'\"\"\" ";
+                pws.AddScript(command);
 
-                await pws.InvokeAsync();
+                var results = await pws.InvokeAsync();
 
-                string result = File.ReadAllText(output) ?? string.Empty;
+                result = File.ReadAllText(output) ?? string.Empty;
                 result = result?.Trim()?.Replace("\r", string.Empty).Replace("\n", " ") ?? string.Empty;
 
                 if (result != string.Empty) {

@@ -6,6 +6,14 @@ using Serilog;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
+if (!Directory.Exists(builder.Configuration.GetSection("Location").Value + "/Logs")) {
+    Directory.CreateDirectory(builder.Configuration.GetSection("Location").Value + "/Logs");
+}
+
+if (!File.Exists(builder.Configuration.GetSection("Location").Value + "/Logs/powershell-output.txt")) {
+    File.Create(builder.Configuration.GetSection("Location").Value + "/Logs/powershell-output.txt");
+}
+
 Log.Logger = new LoggerConfiguration()
        .WriteTo.File(
             builder.Configuration.GetSection("Location").Value + "/Logs/log.txt",

@@ -1,7 +1,22 @@
-# Changelogs
+# Changelog
 
-## [0.0.1] - 2024-05-05
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.0.1] - 2024-09-05
+
+Initial release of PatchHub Service
 
 ### Added
 
-- Initial release of PatchHub Service
+- Support install patches for BLogic Reports Service
+- Support install patches for BLogic Connector
+
+### Changed
+
+### Fixed
+
+- Fix bug when running the PowerShell script to install patches
+- Fix bug when running the PatchHubService in the background

@@ -8,4 +8,10 @@ if (!([bool]([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsId
 }
 
 Remove-Service -Name PatchHub
-sc.exe delete PatchHub
+
+if ($?) {
+  Write-Host "Successfully remove PatchHubService"
+}
+else {
+  sc.exe delete PatchHub
+}

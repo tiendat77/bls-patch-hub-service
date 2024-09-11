@@ -37,6 +37,14 @@ public class EventHandler
                 );
                 break;
 
+            case "pos-server":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-pos-server.ps1"
+                );
+                break;
+
             default:
              break;
         }

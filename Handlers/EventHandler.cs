@@ -45,6 +45,38 @@ public class EventHandler
                 );
                 break;
 
+            case "pos-dashboard":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-pos-dashboard.ps1"
+                );
+                break;
+
+            case "pos":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-pos.ps1"
+                );
+                break;
+
+            case "start-kiosk":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-start-kiosk.ps1"
+                );
+                break;
+
+            case "kiosk":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-kiosk.ps1"
+                );
+                break;
+
             default:
              break;
         }

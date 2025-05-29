@@ -4,17 +4,17 @@ param (
 )
 
 $PatchHubPath = Join-Path $env:TEMP "PatchHubDownloads"
-$PatchFile = Join-Path $PatchHubPath "BLogicPosDashboard.zip"
-$DownloadPath = Join-Path $PatchHubPath "BLogicPosDashboardPatch"
-$BLogicPosDashboardPath = "C:\Program Files (x86)\BLogic Systems\BLogic POSDashboard"
+$PatchFile = Join-Path $PatchHubPath "BLogicReportScheduler.zip"
+$DownloadPath = Join-Path $PatchHubPath "BLogicReportSchedulerPatch"
+$BLogicReportSchedulerPath = "C:\Program Files (x86)\BLogic Systems\BLogic Service\BLogicViewTaskScheduleHandler"
 
 ########################################################################################
 # Functions
 ########################################################################################
 
 function Prepare-Environment {
-    if (-not (Test-Path $BLogicPosDashboardPath)) {
-        $result = "BLogicPosDashboard is not installed"
+    if (-not (Test-Path $BLogicReportSchedulerPath)) {
+        $result = "BLogicReportScheduler is not installed"
         Write-Host $result
         return $result
     }
@@ -60,7 +60,7 @@ function Download-File {
 
 function Install-Patch {
     Write-Host "Copying patch files"
-    Copy-Item -Path "$DownloadPath\*" -Destination $BLogicPosDashboardPath -Recurse -Force
+    Copy-Item -Path "$DownloadPath\*" -Destination $BLogicReportSchedulerPath -Recurse -Force
 
     if ($?) {
         Write-Host "Successfully copied patch files"

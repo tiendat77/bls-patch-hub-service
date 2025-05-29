@@ -29,6 +29,14 @@ public class EventHandler
                 );
                 break;
 
+            case "report-scheduler":
+                path = Path.Combine(
+                    _configuration["Location"],
+                    "Scripts",
+                    "update-report-scheduler.ps1"
+                );
+                break;
+
             case "blogic-connector":
                 path = Path.Combine(
                     _configuration["Location"],

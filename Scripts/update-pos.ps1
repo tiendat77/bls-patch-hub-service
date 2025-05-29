@@ -73,18 +73,6 @@ function Install-Patch {
 
     Start-Sleep -Seconds 1
 
-    Write-Host "Restarting IIS"
-    Restart-Service -Name W3SVC -Force
-
-    if ($?) {
-        Write-Host "Successfully restart IIS"
-    }
-    else {
-        $result = "Failed to restart IIS"
-        Write-Host $result
-        return $result
-    }
-
     Remove-Item -Path $DownloadPath -Recurse -Force
     Write-Host "Patch installed successfully"
 
